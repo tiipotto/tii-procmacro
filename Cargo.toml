@@ -1,0 +1,13 @@
+[package]
+name = "tii-procmacro"
+version = "0.0.1"
+edition = "2021"
+description = "proc macros for tii"
+authors = ["Alexander Schuetz <aschuetz@protonmail.com>", "Kevin Nakamura <grinkers@grinkers.net>"]
+license = "MIT"
+homepage = "https://github.com/tiipotto/tii-procmacro"
+repository = "https://github.com/tiipotto/tii-procmacro"
+resolver = "2"
+
+[lib]
+proc-macro = true

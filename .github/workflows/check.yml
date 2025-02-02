@@ -1,0 +1,101 @@
+name: Check
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build_linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - "x86_64-unknown-linux-gnu"
+          - "i686-unknown-linux-gnu"
+          - "x86_64-unknown-linux-musl"
+          - "i686-unknown-linux-musl"
+          - "aarch64-unknown-linux-gnu"
+    env:
+      RUSTFLAGS: "-D warnings"
+      RUSTDOCFLAGS: "-D warnings"
+    steps:
+      - name: Update sources
+        run: sudo apt update
+      - name: Install musl deps
+        run: sudo apt install musl-dev musl-tools
+        if: ${{ contains(matrix.target, 'musl') }}
+      - name: Install libc6-dev-i386
+        run: sudo apt install libc6-dev-i386
+        if: ${{ contains(matrix.target, 'i686') }}
+      - name: Install libc6-dev-armhf-cross
+        run: sudo apt install libc6-dev-armhf-cross gcc-arm-linux-gnueabihf
+        if: ${{ contains(matrix.target, 'arm') }}
+      - name: Install libc6-dev-arm64-cross
+        run: sudo apt install libc6-dev-arm64-cross gcc-aarch64-linux-gnu
+        if: ${{ contains(matrix.target, 'aarch64') }}
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          toolchain: stable minus 2 releases
+      - name: Build on Linux
+        run: |
+          cargo build --target ${{ matrix.target }}
+
+  build_windows:
+    name: Build Windows
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: ["x86_64-pc-windows-msvc", "i686-pc-windows-msvc"]
+    env:
+      RUSTFLAGS: "-D warnings"
+      RUSTDOCFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          toolchain: stable minus 2 releases
+      - name: Build on Windows
+        run: |
+          cargo build --all-features --target ${{ matrix.target }}
+
+  fmt:
+      runs-on: ubuntu-latest
+      name: fmt
+      steps:
+        - uses: actions/checkout@v4
+        - uses: dtolnay/rust-toolchain@stable
+          with:
+            components: rustfmt
+        - run: cargo fmt --check
+
+  clippy_check:
+      name: clippy
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: dtolnay/rust-toolchain@stable
+          with:
+            components: clippy
+            toolchain: stable minus 2 releases
+        - run: cargo clippy --all-features -- --deny warnings
+        - run: cargo clippy --no-default-features -- --deny warnings
+
+  docs_check:
+      name: docs
+      runs-on: ubuntu-latest
+      env:
+        RUSTDOCFLAGS: -D warnings
+      steps:
+        - uses: actions/checkout@v4
+        - uses: dtolnay/rust-toolchain@stable
+          with:
+            toolchain: stable minus 2 releases
+        - run: cargo doc --all-features --no-deps
