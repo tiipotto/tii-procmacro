@@ -21,3 +21,15 @@ pub fn qvalue_to_strs(_input: TokenStream) -> TokenStream {
   output.push('}');
   output.parse().unwrap()
 }
+
+#[proc_macro]
+pub fn hex_chunked_lut(input: TokenStream) -> TokenStream {
+  let x: u64 = input.to_string().parse().unwrap();
+  let mut output = String::new();
+  output.push_str("[b\"0\r\n\"");
+  for i in 1..x {
+    output.push_str(format!(", b\"{:X}\\r\\n\"", i).as_str());
+  }
+  output.push(']');
+  output.parse().unwrap()
+}
