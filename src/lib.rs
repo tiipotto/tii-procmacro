@@ -30,6 +30,6 @@ pub fn hex_chunked_lut(input: TokenStream) -> TokenStream {
   for i in 1..x {
     output.push_str(format!(", b\"{:X}\\r\\n\"", i).as_str());
   }
-  output.push_str("]");
+  output.push(']');
   output.parse().unwrap()
 }
